@@ -1,6 +1,6 @@
-from Crypto.Cipher import AES
+from Cryptodome.Cipher import AES
 
-from Crypto.Random import get_random_bytes
+from Cryptodome.Random import get_random_bytes
 
 import hashlib
 
@@ -33,4 +33,5 @@ def decrypt_file(password, input_file, output_file):
                 fout.write(cipher.decrypt(chunk))
 
     return True
+
 
