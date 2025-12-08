@@ -1,11 +1,7 @@
-# ULTRA MODERN GUI - ADVANCED UI DESIGN WITH GRADIENT BACKGROUND, CARD UI, BIG BUTTONS, ICONS
-
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from crypto_engine import encrypt_file, decrypt_file
 import threading, time
-
-# MAIN UI
 
 def launch_gui():
     root = tk.Tk()
@@ -13,25 +9,21 @@ def launch_gui():
     root.geometry("900x560")
     root.resizable(False, False)
 
-    # --- GRADIENT BACKGROUND ---
     canvas = tk.Canvas(root, width=900, height=560)
     canvas.pack(fill="both", expand=True)
     for i in range(560):
         color = f"#{int(30+i/3):02x}{int(30+i/3):02x}{int(30+i/3):02x}"
         canvas.create_line(0, i, 900, i, fill=color)
 
-    # CARD CONTAINER
     card = tk.Frame(root, bg="#111111", bd=0, highlightbackground="#4fc3f7", highlightthickness=2)
     card.place(relx=0.5, rely=0.5, anchor="center", width=700, height=420)
 
-    # --- SECTION HEADER ---
     title = tk.Label(card, text="🔐 AES256 Advanced File Security", font=("Segoe UI", 22, "bold"), fg="#4fc3f7", bg="#111111")
     title.pack(pady=20)
 
     selected_file = tk.StringVar()
     password = tk.StringVar()
-
-    # --- FILE SELECT ---
+    
     file_frame = tk.Frame(card, bg="#111111")
     file_frame.pack(pady=10)
 
@@ -46,7 +38,6 @@ def launch_gui():
     browse_btn = tk.Button(file_frame, text="Browse", font=("Segoe UI", 10, "bold"), bg="#4fc3f7", fg="black", relief="flat", width=10, command=browse)
     browse_btn.grid(row=0, column=2, padx=10)
 
-    # --- PASSWORD ---
     pass_frame = tk.Frame(card, bg="#111111")
     pass_frame.pack(pady=15)
 
@@ -59,7 +50,6 @@ def launch_gui():
 
     tk.Button(pass_frame, text="👁", bg="#4fc3f7", fg="black", relief="flat", width=4, command=toggle_visible).grid(row=0, column=2, padx=10)
 
-    # --- PROGRESS BAR ---
     progress = ttk.Progressbar(card, length=500, mode='determinate')
     progress.pack(pady=15)
 
@@ -70,21 +60,18 @@ def launch_gui():
         task()
         progress['value'] = 0
 
-    # --- ENCRYPT ---
     def encrypt_btn():
         if not selected_file.get() or not password.get():
             return messagebox.showerror("Error", "Please fill all fields")
         output = selected_file.get()+".enc"
         threading.Thread(target=lambda: process(lambda: (encrypt_file(password.get(), selected_file.get(), output), messagebox.showinfo("Done", output)))).start()
-
-    # --- DECRYPT ---
+        
     def decrypt_btn():
         if not selected_file.get().endswith('.enc'):
             return messagebox.showerror("Error", "Choose a .enc file only")
         output = selected_file.get().replace('.enc','_decrypted')
         threading.Thread(target=lambda: process(lambda: (decrypt_file(password.get(), selected_file.get(), output), messagebox.showinfo("Done", output)))).start()
-
-    # BUTTON GROUP
+        
     btn_frame = tk.Frame(card, bg="#111111")
     btn_frame.pack(pady=15)
 
@@ -97,3 +84,4 @@ def launch_gui():
 
 if __name__ == '__main__':
     launch_gui()
+
