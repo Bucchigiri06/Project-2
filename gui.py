@@ -1,87 +1,155 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 from crypto_engine import encrypt_file, decrypt_file
-import threading, time
+import threading
 
 def launch_gui():
     root = tk.Tk()
-    root.title("Secure AES Encryption System - Premium Edition")
-    root.geometry("900x560")
+    root.title("Secure File Storage System")
+    root.geometry("720x420")
     root.resizable(False, False)
+    root.configure(bg="#0f172a")  # dark slate background
 
-    canvas = tk.Canvas(root, width=900, height=560)
-    canvas.pack(fill="both", expand=True)
-    for i in range(560):
-        color = f"#{int(30+i/3):02x}{int(30+i/3):02x}{int(30+i/3):02x}"
-        canvas.create_line(0, i, 900, i, fill=color)
+    # ================= STYLES =================
+    style = ttk.Style()
+    style.theme_use("default")
 
-    card = tk.Frame(root, bg="#111111", bd=0, highlightbackground="#4fc3f7", highlightthickness=2)
-    card.place(relx=0.5, rely=0.5, anchor="center", width=700, height=420)
+    style.configure(
+        "TButton",
+        font=("Segoe UI", 11),
+        padding=10
+    )
+    style.configure(
+        "TEntry",
+        font=("Segoe UI", 11),
+        padding=6
+    )
+    style.configure(
+        "TLabel",
+        background="#0f172a",
+        foreground="#e5e7eb",
+        font=("Segoe UI", 11)
+    )
+    style.configure(
+        "Header.TLabel",
+        font=("Segoe UI", 20, "bold"),
+        foreground="#38bdf8"
+    )
+    style.configure(
+        "SubHeader.TLabel",
+        font=("Segoe UI", 10),
+        foreground="#94a3b8"
+    )
 
-    title = tk.Label(card, text="🔐 AES256 Advanced File Security", font=("Segoe UI", 22, "bold"), fg="#4fc3f7", bg="#111111")
-    title.pack(pady=20)
+    # ================= HEADER =================
+    ttk.Label(
+        root,
+        text="🔐 Secure File Storage System",
+        style="Header.TLabel"
+    ).pack(pady=(20, 5))
 
-    selected_file = tk.StringVar()
+    ttk.Label(
+        root,
+        text="AES-256 Encryption with Integrity Verification",
+        style="SubHeader.TLabel"
+    ).pack(pady=(0, 20))
+
+    # ================= CARD =================
+    card = tk.Frame(
+        root,
+        bg="#020617",
+        highlightbackground="#38bdf8",
+        highlightthickness=1
+    )
+    card.pack(padx=40, pady=10, fill="both", expand=True)
+
+    file_path = tk.StringVar()
     password = tk.StringVar()
-    
-    file_frame = tk.Frame(card, bg="#111111")
-    file_frame.pack(pady=10)
+    status = tk.StringVar(value="Idle")
 
-    tk.Label(file_frame, text="Choose File:", fg="white", bg="#111111", font=("Segoe UI", 12)).grid(row=0, column=0, padx=10)
-    entry = tk.Entry(file_frame, textvariable=selected_file, width=45, font=("Segoe UI", 11), bd=0, relief="flat")
-    entry.grid(row=0, column=1, ipady=5)
+    # ================= FILE INPUT =================
+    ttk.Label(card, text="Select File").pack(anchor="w", padx=25, pady=(25, 5))
+    file_frame = tk.Frame(card, bg="#020617")
+    file_frame.pack(fill="x", padx=25)
+
+    file_entry = ttk.Entry(file_frame, textvariable=file_path)
+    file_entry.pack(side="left", fill="x", expand=True)
 
     def browse():
-        path = filedialog.askopenfilename()
-        selected_file.set(path)
+        file_path.set(filedialog.askopenfilename())
 
-    browse_btn = tk.Button(file_frame, text="Browse", font=("Segoe UI", 10, "bold"), bg="#4fc3f7", fg="black", relief="flat", width=10, command=browse)
-    browse_btn.grid(row=0, column=2, padx=10)
+    ttk.Button(file_frame, text="Browse", width=10, command=browse).pack(side="left", padx=10)
 
-    pass_frame = tk.Frame(card, bg="#111111")
-    pass_frame.pack(pady=15)
+    # ================= PASSWORD =================
+    ttk.Label(card, text="Encryption Password").pack(anchor="w", padx=25, pady=(20, 5))
+    ttk.Entry(card, textvariable=password, show="*").pack(fill="x", padx=25)
 
-    tk.Label(pass_frame, text="Password:", fg="white", bg="#111111", font=("Segoe UI", 12)).grid(row=0, column=0, padx=10)
-    pass_entry = tk.Entry(pass_frame, textvariable=password, width=30, show="*", font=("Segoe UI", 11), bd=0, relief="flat")
-    pass_entry.grid(row=0, column=1, ipady=5)
+    # ================= PROGRESS =================
+    progress = ttk.Progressbar(card, mode="indeterminate")
+    progress.pack(fill="x", padx=25, pady=20)
 
-    def toggle_visible():
-        pass_entry.config(show="" if pass_entry.cget("show") == "*" else "*")
+    # ================= ACTIONS =================
+    btn_frame = tk.Frame(card, bg="#020617")
+    btn_frame.pack(pady=10)
 
-    tk.Button(pass_frame, text="👁", bg="#4fc3f7", fg="black", relief="flat", width=4, command=toggle_visible).grid(row=0, column=2, padx=10)
+    def encrypt_action():
+        if not file_path.get() or not password.get():
+            return messagebox.showerror("Error", "Please select a file and enter password")
 
-    progress = ttk.Progressbar(card, length=500, mode='determinate')
-    progress.pack(pady=15)
+        def task():
+            try:
+                progress.start(10)
+                status.set("Encrypting file...")
+                out = file_path.get() + ".enc"
+                encrypt_file(password.get(), file_path.get(), out)
+                status.set("Encryption completed successfully ✔")
+                messagebox.showinfo("Success", f"Encrypted File:\n{out}")
+            finally:
+                progress.stop()
 
-    def process(task):
-        progress.start(10)
-        time.sleep(1.8)
-        progress.stop()
-        task()
-        progress['value'] = 0
+        threading.Thread(target=task, daemon=True).start()
 
-    def encrypt_btn():
-        if not selected_file.get() or not password.get():
-            return messagebox.showerror("Error", "Please fill all fields")
-        output = selected_file.get()+".enc"
-        threading.Thread(target=lambda: process(lambda: (encrypt_file(password.get(), selected_file.get(), output), messagebox.showinfo("Done", output)))).start()
-        
-    def decrypt_btn():
-        if not selected_file.get().endswith('.enc'):
-            return messagebox.showerror("Error", "Choose a .enc file only")
-        output = selected_file.get().replace('.enc','_decrypted')
-        threading.Thread(target=lambda: process(lambda: (decrypt_file(password.get(), selected_file.get(), output), messagebox.showinfo("Done", output)))).start()
-        
-    btn_frame = tk.Frame(card, bg="#111111")
-    btn_frame.pack(pady=15)
+    def decrypt_action():
+        if not file_path.get().endswith(".enc"):
+            return messagebox.showerror("Error", "Please select a .enc file")
 
-    tk.Button(btn_frame, text="Encrypt File", font=("Segoe UI", 12), bg="#4fc3f7", fg="black", relief="flat", width=15, height=2, command=encrypt_btn).grid(row=0, column=0, padx=20)
-    tk.Button(btn_frame, text="Decrypt File", font=("Segoe UI", 12), bg="#00e676", fg="black", relief="flat", width=15, height=2, command=decrypt_btn).grid(row=0, column=1, padx=20)
+        def task():
+            try:
+                progress.start(10)
+                status.set("Decrypting and verifying integrity...")
+                out = file_path.get().replace(".enc", "_decrypted")
+                meta = decrypt_file(password.get(), file_path.get(), out)
+                status.set("Decryption successful ✔")
+                messagebox.showinfo(
+                    "Success",
+                    f"File Restored Successfully\n\n"
+                    f"Original Name: {meta['original_name']}\n"
+                    f"Timestamp: {meta['timestamp']}"
+                )
+            except Exception as e:
+                status.set("Integrity verification failed ❌")
+                messagebox.showerror("Security Alert", str(e))
+            finally:
+                progress.stop()
 
-    tk.Label(card, text="Premium Security • Designed by Suhas", font=("Segoe UI", 10), fg="#b0bec5", bg="#111111").pack(pady=10)
+        threading.Thread(target=task, daemon=True).start()
+
+    ttk.Button(btn_frame, text="Encrypt File", width=18, command=encrypt_action).grid(row=0, column=0, padx=20)
+    ttk.Button(btn_frame, text="Decrypt File", width=18, command=decrypt_action).grid(row=0, column=1, padx=20)
+
+    # ================= STATUS BAR =================
+    status_bar = tk.Label(
+        root,
+        textvariable=status,
+        bg="#020617",
+        fg="#22c55e",
+        font=("Segoe UI", 10),
+        anchor="w",
+        padx=10
+    )
+    status_bar.pack(fill="x", side="bottom")
 
     root.mainloop()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     launch_gui()
-
